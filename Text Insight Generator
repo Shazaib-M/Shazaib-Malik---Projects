@@ -1,0 +1,61 @@
+import re
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from collections import Counter
+
+class TextInsightGenerator:
+    def __init__(self, language='english'):
+        self.stop_words = set(stopwords.words(language))
+
+    # Step 1: Clean text using regex
+    def clean_text(self, text):
+        text = text.lower()
+        text = re.sub(r'<.*?>', ' ', text)          # remove HTML tags
+        text = re.sub(r'[^a-z\s]', ' ', text)       # keep only letters
+        text = re.sub(r'\s+', ' ', text).strip()    # remove extra spaces
+        return text
+
+    # Step 2: Tokenization
+    def tokenize(self, text):
+        return word_tokenize(text)
+
+    # Step 3: Stopword removal
+    def remove_stopwords(self, tokens):
+        return [word for word in tokens if word not in self.stop_words]
+
+    # Step 4: Frequency analysis
+    def get_word_frequencies(self, tokens, top_n=10):
+        freq = Counter(tokens)
+        return freq.most_common(top_n)
+
+    # Full pipeline
+    def process_text(self, text):
+        cleaned = self.clean_text(text)
+        tokens = self.tokenize(cleaned)
+        filtered = self.remove_stopwords(tokens)
+        frequencies = self.get_word_frequencies(filtered)
+
+        return {
+            "cleaned_text": cleaned,
+            "tokens": tokens,
+            "filtered_tokens": filtered,
+            "top_frequencies": frequencies
+        }
+
+
+# Example usage
+if __name__ == "__main__":
+    sample_text = """
+    Natural Language Processing (NLP) is a field of AI that focuses on enabling computers 
+    to understand and process human language. NLP combines computational linguistics with 
+    machine learning techniques.
+    """
+
+    generator = TextInsightGenerator()
+    results = generator.process_text(sample_text)
+
+    print("Cleaned Text:\n", results["cleaned_text"])
+    print("\nTokens:\n", results["tokens"])
+    print("\nFiltered Tokens:\n", results["filtered_tokens"])
+    print("\nTop Word Frequencies:\n", results["top_frequencies"])
