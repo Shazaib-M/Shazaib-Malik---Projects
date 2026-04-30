@@ -1,0 +1,154 @@
+import javafx.application.Application;
+import javafx.geometry.*;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
+import java.util.HashMap;
+import java.util.Map;
+
+// Account class (model)
+class Account {
+    private String accountNumber;
+    private double balance;
+
+    public Account(String accountNumber) {
+        this.accountNumber = accountNumber;
+        this.balance = 0.0;
+    }
+
+    public String getAccountNumber() {
+        return accountNumber;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void deposit(double amount) throws Exception {
+        if (amount <= 0) {
+            throw new Exception("Deposit must be positive");
+        }
+        balance += amount;
+    }
+
+    public void withdraw(double amount) throws Exception {
+        if (amount <= 0) {
+            throw new Exception("Withdrawal must be positive");
+        }
+        if (amount > balance) {
+            throw new Exception("Insufficient funds");
+        }
+        balance -= amount;
+    }
+}
+
+// Main JavaFX App
+public class BankingApp extends Application {
+
+    private Map<String, Account> accounts = new HashMap<>();
+
+    @Override
+    public void start(Stage stage) {
+        TextField accField = new TextField();
+        accField.setPromptText("Account Number");
+
+        TextField amountField = new TextField();
+        amountField.setPromptText("Amount");
+
+        TextArea output = new TextArea();
+        output.setEditable(false);
+
+        Button createBtn = new Button("Create Account");
+        Button depositBtn = new Button("Deposit");
+        Button withdrawBtn = new Button("Withdraw");
+        Button balanceBtn = new Button("Check Balance");
+
+        // Create Account
+        createBtn.setOnAction(e -> {
+            String acc = accField.getText().trim();
+            if (acc.isEmpty()) {
+                output.setText("Account number required.");
+                return;
+            }
+
+            if (accounts.containsKey(acc)) {
+                output.setText("Account already exists.");
+            } else {
+                accounts.put(acc, new Account(acc));
+                output.setText("Account created successfully.");
+            }
+        });
+
+        // Deposit
+        depositBtn.setOnAction(e -> {
+            handleTransaction(accField, amountField, output, "deposit");
+        });
+
+        // Withdraw
+        withdrawBtn.setOnAction(e -> {
+            handleTransaction(accField, amountField, output, "withdraw");
+        });
+
+        // Balance
+        balanceBtn.setOnAction(e -> {
+            String acc = accField.getText().trim();
+            if (!accounts.containsKey(acc)) {
+                output.setText("Account not found.");
+                return;
+            }
+
+            output.setText("Balance: $" + accounts.get(acc).getBalance());
+        });
+
+        VBox layout = new VBox(10,
+                accField,
+                amountField,
+                new HBox(10, createBtn, depositBtn),
+                new HBox(10, withdrawBtn, balanceBtn),
+                output
+        );
+
+        layout.setPadding(new Insets(15));
+
+        stage.setScene(new Scene(layout, 400, 300));
+        stage.setTitle("Banking Management System");
+        stage.show();
+    }
+
+    // Modular transaction handler
+    private void handleTransaction(TextField accField, TextField amountField,
+                                   TextArea output, String type) {
+        String acc = accField.getText().trim();
+        String amtText = amountField.getText().trim();
+
+        if (!accounts.containsKey(acc)) {
+            output.setText("Account not found.");
+            return;
+        }
+
+        try {
+            double amount = Double.parseDouble(amtText);
+
+            Account account = accounts.get(acc);
+
+            if (type.equals("deposit")) {
+                account.deposit(amount);
+                output.setText("Deposited successfully.");
+            } else {
+                account.withdraw(amount);
+                output.setText("Withdrawn successfully.");
+            }
+
+        } catch (NumberFormatException ex) {
+            output.setText("Invalid amount.");
+        } catch (Exception ex) {
+            output.setText(ex.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        launch();
+    }
+}
